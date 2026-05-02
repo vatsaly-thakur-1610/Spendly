@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block title %}Profile — Spendly{% endblock %}
+
+{% block head %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/profile.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="profile-page">
+    <div class="profile-inner">
+
+        <!-- User info card -->
+        <div class="profile-header-card">
+            <div class="profile-avatar">{{ user.initials }}</div>
+            <div class="profile-identity">
+                <h1 class="profile-name">{{ user.name }}</h1>
+                <p class="profile-email">
+                    <i data-lucide="mail"></i>
+                    {{ user.email }}
+                </p>
+                <p class="profile-since">
+                    <i data-lucide="calendar"></i>
+                    Member since {{ user.member_since }}
+                </p>
+            </div>
+        </div>
+
+        <!-- Summary stats -->
+        <div class="profile-stats">
+            <div class="stat-card">
+                <i data-lucide="credit-card" class="stat-icon"></i>
+                <span class="stat-label">Total Spent</span>
+                <span class="stat-value">{{ stats.total_spent }}</span>
+            </div>
+            <div class="stat-card">
+                <i data-lucide="list" class="stat-icon"></i>
+                <span class="stat-label">Transactions</span>
+                <span class="stat-value">{{ stats.transaction_count }}</span>
+            </div>
+            <div class="stat-card">
+                <i data-lucide="tag" class="stat-icon"></i>
+                <span class="stat-label">Top Category</span>
+                <span class="stat-value">{{ stats.top_category }}</span>
+            </div>
+        </div>
+
+        <!-- Transaction history -->
+        <div class="profile-section">
+            <h2 class="section-title">
+                <i data-lucide="arrow-down-right"></i>
+                Transaction History
+            </h2>
+            <div class="table-wrap">
+                <table class="txn-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Description</th>
+                            <th>Category</th>
+                            <th class="txn-amt-head">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for txn in transactions %}
+                        <tr>
+                            <td class="txn-date">{{ txn.date }}</td>
+                            <td class="txn-desc">{{ txn.description }}</td>
+                            <td>
+                                <span class="badge badge--{{ txn.category | lower }}">
+                                    {{ txn.category }}
+                                </span>
+                            </td>
+                            <td class="txn-amt">{{ txn.amount }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Category breakdown -->
+        <div class="profile-section">
+            <h2 class="section-title">
+                <i data-lucide="pie-chart"></i>
+                Spending by Category
+            </h2>
+            <div class="breakdown-list">
+                {% for cat in categories %}
+                <div class="breakdown-row">
+                    <div class="breakdown-meta">
+                        <span class="breakdown-name">{{ cat.name }}</span>
+                        <span class="breakdown-total">{{ cat.total }}</span>
+                    </div>
+                    <div class="bar-track">
+                        <div class="bar-fill bar-fill--{{ cat.name | lower }}"
+                             style="width: {{ cat.pct }}%"></div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>lucide.createIcons();</script>
+{% endblock %}
