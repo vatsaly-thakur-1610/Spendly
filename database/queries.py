@@ -1,14 +1,20 @@
 from database.db import get_db
 
 
-def get_recent_transactions(user_id, limit=10):
+def get_recent_transactions(user_id, limit=10, date_from=None, date_to=None):
     conn = get_db()
     try:
-        rows = conn.execute(
+        sql = (
             "SELECT date, description, category, amount "
-            "FROM expenses WHERE user_id = ? ORDER BY date DESC LIMIT ?",
-            (user_id, limit),
-        ).fetchall()
+            "FROM expenses WHERE user_id = ?"
+        )
+        params = (user_id,)
+        if date_from is not None and date_to is not None:
+            sql += " AND date BETWEEN ? AND ?"
+            params += (date_from, date_to)
+        sql += " ORDER BY date DESC LIMIT ?"
+        params += (limit,)
+        rows = conn.execute(sql, params).fetchall()
         return [
             {
                 "date": row["date"],
@@ -45,18 +51,23 @@ def get_user_by_id(user_id):
         conn.close()
 
 
-def get_summary_stats(user_id):
+def get_summary_stats(user_id, date_from=None, date_to=None):
     conn = get_db()
     try:
+        base_where = "WHERE user_id = ?"
+        base_params = (user_id,)
+        if date_from is not None and date_to is not None:
+            base_where += " AND date BETWEEN ? AND ?"
+            base_params += (date_from, date_to)
         row = conn.execute(
             "SELECT COALESCE(SUM(amount), 0) AS total, COUNT(*) AS cnt "
-            "FROM expenses WHERE user_id = ?",
-            (user_id,),
+            "FROM expenses " + base_where,
+            base_params,
         ).fetchone()
         top_row = conn.execute(
-            "SELECT category FROM expenses WHERE user_id = ? "
-            "GROUP BY category ORDER BY SUM(amount) DESC LIMIT 1",
-            (user_id,),
+            "SELECT category FROM expenses " + base_where +
+            " GROUP BY category ORDER BY SUM(amount) DESC LIMIT 1",
+            base_params,
         ).fetchone()
         return {
             "total_spent": f"₹{row['total']:,.2f}",
@@ -67,15 +78,19 @@ def get_summary_stats(user_id):
         conn.close()
 
 
-def get_category_breakdown(user_id):
+def get_category_breakdown(user_id, date_from=None, date_to=None):
     conn = get_db()
     try:
-        rows = conn.execute(
+        sql = (
             "SELECT category, SUM(amount) AS total "
-            "FROM expenses WHERE user_id = ? "
-            "GROUP BY category ORDER BY total DESC",
-            (user_id,),
-        ).fetchall()
+            "FROM expenses WHERE user_id = ?"
+        )
+        params = (user_id,)
+        if date_from is not None and date_to is not None:
+            sql += " AND date BETWEEN ? AND ?"
+            params += (date_from, date_to)
+        sql += " GROUP BY category ORDER BY total DESC"
+        rows = conn.execute(sql, params).fetchall()
         if not rows:
             return []
         grand_total = sum(row["total"] for row in rows)

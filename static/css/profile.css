@@ -295,6 +295,101 @@
 .bar-fill--other         { background: var(--ink-faint); }
 
 /* ------------------------------------------------------------------ */
+/* Date filter bar                                                      */
+/* ------------------------------------------------------------------ */
+
+.filter-bar {
+    background: var(--paper-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 1rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    flex-wrap: wrap;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+}
+
+.filter-presets {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.filter-preset-btn {
+    display: inline-block;
+    padding: 0.35rem 0.85rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--ink-muted);
+    border: 1px solid var(--border);
+    background: transparent;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+    white-space: nowrap;
+}
+
+.filter-preset-btn:hover {
+    background: var(--paper-warm);
+    color: var(--ink);
+    border-color: var(--border-soft);
+}
+
+.filter-preset-btn.active {
+    background: var(--accent);
+    color: var(--paper-card);
+    border-color: var(--accent);
+}
+
+.filter-custom {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-left: auto;
+}
+
+.filter-date-input {
+    padding: 0.35rem 0.6rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-body);
+    font-size: 0.8rem;
+    color: var(--ink);
+    background: var(--paper);
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.filter-date-input:focus {
+    border-color: var(--accent);
+}
+
+.filter-date-sep {
+    font-size: 0.8rem;
+    color: var(--ink-faint);
+}
+
+.filter-apply-btn {
+    padding: 0.35rem 0.85rem;
+    background: var(--ink);
+    color: var(--paper-card);
+    border: none;
+    border-radius: var(--radius-sm);
+    font-family: var(--font-body);
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+    white-space: nowrap;
+}
+
+.filter-apply-btn:hover {
+    background: var(--accent);
+}
+
+/* ------------------------------------------------------------------ */
 /* Responsive                                                          */
 /* ------------------------------------------------------------------ */
 
@@ -322,5 +417,22 @@
 
     .profile-section {
         padding: 1.25rem;
+    }
+
+    .filter-bar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+        padding: 1rem;
+    }
+
+    .filter-custom {
+        margin-left: 0;
+        width: 100%;
+    }
+
+    .filter-date-input {
+        flex: 1;
+        min-width: 0;
     }
 }
