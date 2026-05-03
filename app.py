@@ -1,4 +1,5 @@
 import sqlite3
+from datetime import datetime, date, timedelta
 
 from flask import Flask, render_template, redirect, url_for, request, flash, abort, session
 from database.db import get_db, init_db, seed_db, create_user, get_user_by_email
@@ -79,6 +80,13 @@ def logout():
     return redirect(url_for("landing"))
 
 
+def _subtract_months(d, n):
+    month = d.month - n
+    year  = d.year + (month - 1) // 12
+    month = (month - 1) % 12 + 1
+    return date(year, month, 1)
+
+
 @app.route("/profile")
 def profile():
     if not session.get("user_id"):
@@ -87,11 +95,64 @@ def profile():
     user = get_user_by_id(session["user_id"])
     if user is None:
         abort(404)
-    stats = get_summary_stats(session["user_id"])
-    transactions = get_recent_transactions(session["user_id"])
-    categories = get_category_breakdown(session["user_id"])
-    return render_template("profile.html", user=user, stats=stats,
-                           transactions=transactions, categories=categories)
+
+    from_str = request.args.get("from", "").strip()
+    to_str   = request.args.get("to",   "").strip()
+
+    date_from = date_to_parsed = None
+    active_period = "all_time"
+
+    if from_str and to_str:
+        try:
+            date_from      = datetime.strptime(from_str, "%Y-%m-%d").date()
+            date_to_parsed = datetime.strptime(to_str,   "%Y-%m-%d").date()
+        except ValueError:
+            abort(400)
+
+        today               = date.today()
+        this_month_start    = today.replace(day=1)
+        last_month_end      = this_month_start - timedelta(days=1)
+        last_month_start    = last_month_end.replace(day=1)
+        last_3_months_start = _subtract_months(today, 2)
+
+        if date_from == this_month_start and date_to_parsed == today:
+            active_period = "this_month"
+        elif date_from == last_month_start and date_to_parsed == last_month_end:
+            active_period = "last_month"
+        elif date_from == last_3_months_start and date_to_parsed == today:
+            active_period = "last_3_months"
+        else:
+            active_period = "custom"
+
+    df_str = date_from.strftime("%Y-%m-%d")      if date_from      else None
+    dt_str = date_to_parsed.strftime("%Y-%m-%d") if date_to_parsed else None
+
+    today               = date.today()
+    this_month_start    = today.replace(day=1)
+    last_month_end      = this_month_start - timedelta(days=1)
+    last_month_start    = last_month_end.replace(day=1)
+    last_3_months_start = _subtract_months(today, 2)
+
+    preset_urls = {
+        "this_month":    url_for("profile", **{"from": this_month_start.strftime("%Y-%m-%d"),
+                                               "to":   today.strftime("%Y-%m-%d")}),
+        "last_month":    url_for("profile", **{"from": last_month_start.strftime("%Y-%m-%d"),
+                                               "to":   last_month_end.strftime("%Y-%m-%d")}),
+        "last_3_months": url_for("profile", **{"from": last_3_months_start.strftime("%Y-%m-%d"),
+                                               "to":   today.strftime("%Y-%m-%d")}),
+        "all_time":      url_for("profile"),
+    }
+
+    stats        = get_summary_stats(session["user_id"],       date_from=df_str, date_to=dt_str)
+    transactions = get_recent_transactions(session["user_id"], date_from=df_str, date_to=dt_str)
+    categories   = get_category_breakdown(session["user_id"],  date_from=df_str, date_to=dt_str)
+
+    return render_template(
+        "profile.html",
+        user=user, stats=stats, transactions=transactions, categories=categories,
+        date_from=from_str, date_to=to_str,
+        active_period=active_period, preset_urls=preset_urls,
+    )
 
 
 @app.route("/expenses/add")
